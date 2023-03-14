@@ -30,10 +30,11 @@ class DateModel:
     degree: str
     type_of_work: str
 
-    def __init__(self, degree: str, day: str, month: str):
+    def __init__(self, degree: str, day: str, month: str, type_of_work: str = 'ответ на уроке'):
         self.degree = degree
         self.day = day
         self.month = month
+        self.type_of_work = type_of_work
 
 
 class SubjectModel:

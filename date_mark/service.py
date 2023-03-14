@@ -19,6 +19,7 @@ class ImportService:
         # Get a sheet by name
         sheet = wb.get_sheet_by_name(filename)
         gradeModel = GradeModel(name=sheet['A7'].value, subjects=[])
+        year = sheet['A5'].value.split('Учебный год: ')[1].lower().split('/')[0]
 
         subjectModel = []
 
@@ -27,7 +28,7 @@ class ImportService:
             student_number = str(sheet[get_column_letter(column_index) + str(i)].value)
 
             if 'Предмет:' in student_number:
-                subjectModel = SubjectModel(name=student_number.split('Предмет:')[1])
+                subjectModel = SubjectModel(name=student_number.split('Предмет:')[1].lower().split('/')[0])
 
             student_count = 0
             date_count = 3
@@ -39,6 +40,7 @@ class ImportService:
 
                 while sheet[get_column_letter(date_count) + str(i+1)].value:
                     date_count += 1
+                date_count -= 1  # 1 лишний раз
 
                 for j in range(i+2, i+student_count):
                     studentModel = StudentModel(name=sheet['B' + str(j)].value)
@@ -50,7 +52,10 @@ class ImportService:
                         month_may = sheet[get_column_letter(d) + str(i)].value
                         if month_may:
                             month = month_may
-                        dateModel = DateModel(degree=degree, day=day, month=month)
+                        if day.isdigit():
+                            dateModel = DateModel(degree=degree, day=day, month=month, type_of_work='Итоговая')
+                        else:
+                            dateModel = DateModel(degree=degree, day=day, month=month)
                         studentModel.dates.append(dateModel)
                     subjectModel.students.append(studentModel)
                 gradeModel.subjects.append(subjectModel)
