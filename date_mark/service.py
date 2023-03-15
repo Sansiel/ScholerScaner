@@ -40,7 +40,6 @@ class ImportService:
 
                 while sheet[get_column_letter(date_count) + str(i+1)].value:
                     date_count += 1
-                date_count -= 1  # 1 лишний раз
 
                 for j in range(i+2, i+student_count):
                     studentModel = StudentModel(name=sheet['B' + str(j)].value)
@@ -53,9 +52,10 @@ class ImportService:
                         if month_may:
                             month = month_may
                         if day.isdigit():
-                            dateModel = DateModel(degree=degree, day=day, month=month, type_of_work='Итоговая')
+                            type_of_work_temp = sheet[get_column_letter(5) + str(i+student_count+2+d)].value
+                            dateModel = DateModel(degree=degree, day=day, month=month, type_of_work=type_of_work_temp)
                         else:
-                            dateModel = DateModel(degree=degree, day=day, month=month)
+                            dateModel = DateModel(degree=degree, day=day, month=month, type_of_work='Итоговая')
                         studentModel.dates.append(dateModel)
                     subjectModel.students.append(studentModel)
                 gradeModel.subjects.append(subjectModel)
