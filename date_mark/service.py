@@ -18,7 +18,8 @@ class ImportService:
 
         # Get a sheet by name
         sheet = wb.get_sheet_by_name(filename)
-        gradeModel = GradeModel(name=sheet['A7'].value, subjects=[])
+        classname = sheet['A7'].value.lower().split(': ')[1]
+        gradeModel = GradeModel(name=classname, subjects=[])
         year = sheet['A5'].value.split('Учебный год: ')[1].lower().split('/')[0]
 
         subjectModel = []
@@ -28,11 +29,12 @@ class ImportService:
             student_number = str(sheet[get_column_letter(column_index) + str(i)].value)
 
             if 'Предмет:' in student_number:
-                subjectModel = SubjectModel(name=student_number.split('Предмет:')[1].lower().split('/')[0])
+                subject_name = student_number.split('Предмет:')[1].lower().split('/' + classname)
+                subjectModel = SubjectModel(name=subject_name[0] + subject_name[1])
 
             student_count = 0
             date_count = 3
-            if (student_number == "№"):
+            if student_number == "№":
                 j = i + 2
                 while sheet["A" + str(j)].value:
                     j += 1
@@ -63,9 +65,9 @@ class ImportService:
 
     def get_recommend(self, filename) -> str:
         grade_model = self.import_data(filename)
-        response = '-------------------' + grade_model.name + '-------------------\n'
+        response = '<h1>-------------------' + grade_model.name + '-------------------</h1>\n'
         for subject_model in grade_model.subjects:
-            response += subject_model.subject_name + ':\n'
+            response += '<h2>' + subject_model.subject_name + ':</h2>\n'
             for student_model in subject_model.students:
                 degree_list = []
                 for date_model in student_model.dates:
@@ -73,9 +75,9 @@ class ImportService:
                         degree_list.append(int(date_model.degree))
                 trend = self.linreg(degree_list)
                 if trend > 0.5:
-                    response += '   у ' + student_model.fullname + ' наблюдается повышение успеваемости\n'
+                    response += '   у ' + student_model.fullname + ' наблюдается <strong>повышение</strong> успеваемости\n'
                 if trend < 0.5:
-                    response += '   у ' + student_model.fullname + ' наблюдается поНИЖение успеваемости\n'
+                    response += '   у ' + student_model.fullname + ' наблюдается <strong>понижение</strong> успеваемости\n'
         return response
 
 
