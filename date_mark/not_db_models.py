@@ -29,12 +29,17 @@ class DateModel:
     merge_theme_id: list
     degree: str
     type_of_work: str
+    date: str
+    theme: str
 
-    def __init__(self, degree: str, day: str, month: str, type_of_work: str = 'ответ на уроке'):
+    def __init__(self, degree: str, day: str, month: str, theme: str, type_of_work: str = 'ответ на уроке',
+                 date: str = '1/1/1999'):
         self.degree = degree
         self.day = day
         self.month = month
+        self.theme = theme
         self.type_of_work = type_of_work
+        self.date = date
 
 
 class SubjectModel:
