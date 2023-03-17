@@ -1,4 +1,3 @@
-# Import `load_workbook` module from `openpyxl`
 from statistics import mean
 
 from openpyxl import load_workbook
