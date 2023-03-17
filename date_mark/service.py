@@ -54,16 +54,24 @@ class ImportService:
                         if month_may:
                             month = month_may
                         if day.isdigit():
-                            type_of_work_temp = sheet[get_column_letter(5) + str(i + student_count + 2 + d)].value
-                            date = sheet[get_column_letter(1) + str(i + student_count + 2 + d)].value
-                            theme = sheet[get_column_letter(2) + str(i + student_count + 2 + d)].value
-                            date_model = DateModel(degree=degree, day=day, month=month, theme=theme,
-                                                   type_of_work=type_of_work_temp, date=date)
+                            degrees = [degree]
+                            if not self.check_int(degree) and degree is not None and degree != 'Н':
+                                degrees = degree.split()
+
+                            for deg in degrees:
+                                type_of_work_temp = sheet[get_column_letter(5) + str(i + student_count + 2 + d)].value
+                                date = sheet[get_column_letter(1) + str(i + student_count + 2 + d)].value
+                                theme = sheet[get_column_letter(2) + str(i + student_count + 2 + d)].value
+                                d += 1
+                                date_model = DateModel(degree=deg, day=day, month=month, theme=theme,
+                                                       type_of_work=type_of_work_temp, date=date)
+                                date_model.year = year
+                                student_model.dates.append(date_model)
                         else:
                             date_model = DateModel(degree=degree, day=day, month=month, theme='Итоговая',
                                                    type_of_work='Итоговая', date=day)
-                        date_model.year = year
-                        student_model.dates.append(date_model)
+                            date_model.year = year
+                            student_model.dates.append(date_model)
                     subject_model.students.append(student_model)
                 grade_model.subjects.append(subject_model)
         return grade_model
@@ -112,7 +120,6 @@ class ImportService:
                 degree_count += 1
                 degree_sum += int(date_model.degree)
         return degree_sum/degree_count
-
 
     def check_int(self, s):
         if not s:
