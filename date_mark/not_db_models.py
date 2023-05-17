@@ -6,10 +6,12 @@ from django.db import models
 class StudentModel:
     """Модель ученика"""
 
+    id: int
     fullname: str
     dates: list
 
-    def __init__(self, name: str):
+    def __init__(self, id: int, name: str):
+        self.id = int(id)
         self.fullname = name
         self.dates = []
 
@@ -64,3 +66,24 @@ class GradeModel:
     def __init__(self, name: str, subjects: list):
         self.name = name
         self.subjects = subjects
+
+
+class ProblemModel:
+    text: str
+    date: str
+    theme: str
+    type_of_work: str
+
+    def __init__(self, date: str, theme: str, type_of_work: str):
+        self.date = date
+        self.theme = theme
+        self.type_of_work = type_of_work
+        self.text = ''
+
+
+class StudentProblemsModel:
+    fullname: str
+    problems: list
+
+    def __init__(self, name: str):
+        self.fullname = name

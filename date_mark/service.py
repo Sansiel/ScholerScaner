@@ -3,7 +3,8 @@ from statistics import mean
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string, get_column_letter
 
-from date_mark.not_db_models import GradeModel, SubjectModel, StudentModel, DateModel
+from date_mark.not_db_models import GradeModel, SubjectModel, StudentModel, DateModel, StudentProblemsModel, \
+    ProblemModel
 
 
 class ImportService:
@@ -44,7 +45,7 @@ class ImportService:
                     date_count += 1
 
                 for j in range(i + 2, i + student_count):
-                    student_model = StudentModel(name=sheet['B' + str(j)].value)
+                    student_model = StudentModel(id=sheet['A' + str(j)].value, name=sheet['B' + str(j)].value)
 
                     month = ''
                     for d in range(3, date_count):
@@ -83,6 +84,7 @@ class ImportService:
             response += '<h2>' + subject_model.subject_name + ':</h2>\n'
             for student_model in subject_model.students:
                 # response += self.grade_trend(student_model)
+                student_problem_model = StudentProblemsModel(student_model.fullname)
                 response += self.theme_not_understand(student_model)
 
         return response
@@ -103,13 +105,18 @@ class ImportService:
         # avg_degree = self.avg_degree(student_model.dates)
         avg_degree_now = []
         response = ''
+        problem_models = list()
         for date_model in student_model.dates:
             if self.check_int(date_model.degree):
                 avg_degree_now.append(int(date_model.degree))
                 if int(round(mean(avg_degree_now), 0)) > int(date_model.degree):
-                    response += f'''\n{date_model.date} {date_model.theme} по причине {date_model.type_of_work}'''
+                    # response += f'''\n{date_model.date} {date_model.theme} по причине {date_model.type_of_work}'''
+                    problem_model = self.get_problems(student_model, date_model)
+                    problem_models.append(problem_model)
+        for problem_model in problem_models:
+            response += f' {problem_model.date} наблюдается:\n{problem_model.text} \n'
         if response:
-            return f'\nУ <strong>{student_model.fullname}</strong> наблюдаются проблемы в следующих темах: ' + response
+            return f'\nУ <strong>{student_model.fullname}</strong> ' + response
         return ''
 
     def avg_degree(self, dates: list) -> float:
@@ -141,3 +148,45 @@ class ImportService:
         if len(trends_list) == 0:
             return 0.5
         return sum(trends_list) / len(trends_list)
+
+    def get_problems(self, student_model: StudentModel, date_model: DateModel) -> ProblemModel:
+        date_index = student_model.dates.index(date_model)
+        problem_model = ProblemModel(date_model.date, date_model.theme, date_model.type_of_work)
+        if date_index > 3:
+            if date_model.theme:
+                problem_model.text = problem_model.text + f'    Проблема наблюдается на теме {date_model.theme}\n'
+            previos_date_model = student_model.dates[date_index-1]
+            if previos_date_model.degree == 'Н':
+                problem_model.text = problem_model.text + '    Болел и пропустил прошлое занятие\n'
+            verbal_count = 0
+            verbal_sum = 0
+            written_count = 0
+            written_sum = 0
+            for i in range(date_index):
+                temp_date_model = student_model.dates[i]
+                if temp_date_model.type_of_work == 'Ответ на уроке' or temp_date_model.type_of_work is None:
+                    if self.check_int(temp_date_model.degree):
+                        verbal_count += 1
+                        verbal_sum += int(temp_date_model.degree)
+                else:
+                    if self.check_int(temp_date_model.degree):
+                        written_count += 1
+                        written_sum += int(temp_date_model.degree)
+            verba_avg = 0
+            written_avg = 0
+            if verbal_count:
+                verba_avg = verbal_sum / verbal_count
+            if written_count:
+                written_avg = written_sum/written_count
+
+            if verbal_count and written_count:
+                if verba_avg - written_avg > 0.7:
+                    problem_model.text = problem_model.text + '    Наблюдается пониженная успеваемость на устных работах\n'
+                if written_avg - verba_avg > 0.7:
+                    problem_model.text = problem_model.text + '    Наблюдается пониженная успеваемость на письменных работах\n'
+
+        return problem_model
+
+
+
+
