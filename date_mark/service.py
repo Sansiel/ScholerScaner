@@ -85,7 +85,7 @@ class ImportService:
             for student_model in subject_model.students:
                 # response += self.grade_trend(student_model)
                 student_problem_model = StudentProblemsModel(student_model.fullname)
-                response += self.theme_not_understand(student_model)
+                response += self.theme_not_understand(student_model, grade_model.subjects)
 
         return response
 
@@ -101,7 +101,7 @@ class ImportService:
             return '   у ' + student_model.fullname + ' наблюдается <strong>понижение</strong> успеваемости\n'
         return ''
 
-    def theme_not_understand(self, student_model: StudentModel) -> str:
+    def theme_not_understand(self, student_model: StudentModel, subjects: list) -> str:
         # avg_degree = self.avg_degree(student_model.dates)
         avg_degree_now = []
         response = ''
@@ -112,6 +112,7 @@ class ImportService:
                 if int(round(mean(avg_degree_now), 0)) > int(date_model.degree):
                     # response += f'''\n{date_model.date} {date_model.theme} по причине {date_model.type_of_work}'''
                     problem_model = self.get_problems(student_model, date_model)
+                    problem_model = self.analyse_day(problem_model, subjects, student_model.fullname)
                     problem_models.append(problem_model)
         for problem_model in problem_models:
             response += f' {problem_model.date} наблюдается:\n{problem_model.text} \n'
@@ -187,6 +188,27 @@ class ImportService:
 
         return problem_model
 
+    def analyse_day(self, problem_model: ProblemModel, subjects: list, student_name: str) -> ProblemModel:
+        that_day_subjects = []
+        for subject in subjects:
+            for student in subject.students:
+                if student.fullname == student_name:
+                    for date in student.dates:
+                        if date.date == problem_model.date:
+                            that_day_subjects.append(date.type_of_work)
+        if 'Контрольная работа' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день была Контрольная работа\n'
+        if 'Практическая работа' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день была Практическая работа\n'
+        if 'Самостоятельная работа' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день была Самостоятельная работа\n'
+        if 'Тестирование' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день было Тестирование\n'
+        if 'Зачёт' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день был Зачёт по физ-ре\n'
+        if 'Диктант' in that_day_subjects or 'Сочинение' in that_day_subjects or 'Изложение' in that_day_subjects:
+            problem_model.text = problem_model.text + '    В этот день был Диктант/Сочинение/Изложение\n'
+        return problem_model
 
 
 
