@@ -10,6 +10,7 @@ from date_mark.not_db_models import GradeModel, SubjectModel, StudentModel, Date
 class ImportService:
     import_file_path = 'date_mark/input/'
     format_input = '.xlsx'
+    class_problems_count = {}
 
     def import_data(self, filename) -> GradeModel:
         path = self.import_file_path + filename + self.format_input
@@ -82,10 +83,16 @@ class ImportService:
         response = '<h1>-------------------' + grade_model.name + '-------------------</h1>\n'
         for subject_model in grade_model.subjects:
             response += '<h2>' + subject_model.subject_name + ':</h2>\n'
+            student_count = 0
             for student_model in subject_model.students:
                 # response += self.grade_trend(student_model)
-                student_problem_model = StudentProblemsModel(student_model.fullname)
+                # student_problem_model = StudentProblemsModel(student_model.fullname)
+                student_count += 1
                 response += self.theme_not_understand(student_model, grade_model.subjects)
+            for class_problem_key in self.class_problems_count:
+                if self.class_problems_count[class_problem_key] >= student_count/2:
+                    response += f'У класса наблюдается проблема на дате {class_problem_key}'
+                self.class_problems_count[class_problem_key] = 0
 
         return response
 
@@ -114,6 +121,16 @@ class ImportService:
                     problem_model = self.get_problems(student_model, date_model)
                     problem_model = self.analyse_day(problem_model, subjects, student_model.fullname)
                     problem_models.append(problem_model)
+                    if self.class_problems_count.get(f'{date_model.date}'):
+                        self.class_problems_count[f'{date_model.date}'] += 1
+                    else:
+                        self.class_problems_count[f'{date_model.date}'] = 1
+
+        last_date = student_model.dates[-1]
+        if last_date.degree == 'Н':
+            problem_text = 'Возможно на следующем занятии ученик получит отметку ниже обычной по причине: ' \
+                           'Болел на последнем занятии'
+            problem_models.append(ProblemModel(last_date.date, last_date.theme, last_date.type_of_work, problem_text))
         for problem_model in problem_models:
             response += f' {problem_model.date} наблюдается:\n{problem_model.text} \n'
         if response:

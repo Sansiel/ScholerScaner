@@ -74,11 +74,11 @@ class ProblemModel:
     theme: str
     type_of_work: str
 
-    def __init__(self, date: str, theme: str, type_of_work: str):
+    def __init__(self, date: str, theme: str, type_of_work: str, text: str = ''):
         self.date = date
         self.theme = theme
         self.type_of_work = type_of_work
-        self.text = ''
+        self.text = text
 
 
 class StudentProblemsModel:
